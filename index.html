@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order creation</title>
+    <script src="script.js"></script>
+</head>
+<body>
+    <h1>Create your order</h1>
+    <form action="test.php" method="post" id="orderForm">
+        <label style="padding-right: 30px">Product Information</label>
+        <input type="text" placeholder="Track number" name="track_number">
+        <input type="text" placeholder="Partner order ID" name="partner_order_id">
+        <input type="text" placeholder="Declared cost" name="declared_cost">
+        <input type="text" placeholder="Payment amount" name="payment_amount">
+        <input type="text" placeholder="Cash on delivery sum" name="cash_on_delivery_sum">
+        <input type="text" placeholder="Delivery acceptance act number" name="delivery_acceptance_act_number"> <br><br>
+
+        <label style="padding-right: 30px">Sender Information</label>
+        <input type="text" placeholder="Sender phone" name="sender_phone">
+        <input type="text" placeholder="Sender email" name="sender_email">
+        <input type="text" placeholder="Sender full name" name="sender_fullName">
+        <input type="text" placeholder="Sender passport" name="sender_passport">
+        <input type="text" placeholder="Sender point code" name="sender_point_code"> <br><br>
+
+        <label style="padding-right: 30px">Recipient Information</label>
+        <input type="text" placeholder="Recipient phone" name="recipient_phone">
+        <input type="text" placeholder="Recipient email" name="recipient_email">
+        <input type="text" placeholder="Recipient full name" name="recipient_fullName">
+        <input type="text" placeholder="Recipient pickup point code" name="recipient_pickup_point_code"> <br><br> <br><br>
+
+        <button onclick="addProduct(event)">
+            Add product
+        </button>
+        <button onclick="deleteProduct(event)">
+            Delete product
+        </button>
+        <br><br>
+
+        <div class="product">
+            <label style="padding-right: 30px">Product Information</label>
+            <input type="text" placeholder="Product number" name="productNumber1">
+            <input type="text" placeholder="Product name" name="productName1">
+            <input type="text" placeholder="Product nds" name="productNds1">
+            <input type="text" placeholder="Product price" name="productPrice1">
+            <input type="text" placeholder="Product quantity" name="productQuantity1"> <br><br>
+
+            <label style="padding-right: 30px">Box Information</label>
+            <input type="text" placeholder="Box barcode" name="boxBarcode1">
+            <input type="text" placeholder="Box weight" name="boxWeight1">
+            <input type="text" placeholder="Box sizeX" name="boxSizeX1">
+            <input type="text" placeholder="Box sizeY" name="boxSizeY1">
+            <input type="text" placeholder="Box sizeZ" name="boxSizeZ1">
+            <br><br>
+        </div>
+
+        <input type="submit" id = 'createBtn' value="Create">
+    </form>
+</body>
+</html>
