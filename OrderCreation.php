@@ -40,14 +40,18 @@ class OrderCreation
            CURLOPT_HTTPHEADER => ["Authorization: Bearer " . $_SESSION['access_token']]
         ]);
 
-        $result = json_decode(curl_exec($ch));
+        curl_exec($ch);
+        $headers = curl_getinfo($ch);
         curl_close($ch);
-        if ($result->{'title'} == 'An error occurred')
+
+        if ($headers['http_code'] == 200)
+        {
+            return false;
+        }
+        else
         {
             return true;
         }
-
-        return false;
     }
 
     public function createOrder($fields)
@@ -76,21 +80,18 @@ class OrderCreation
             CURLOPT_SSL_VERIFYPEER => false
         ]);
 
-        session_write_close();
+        curl_exec($ch);
+        $headers = curl_getinfo($ch);
+        curl_close($ch);
 
-        $result = json_decode(curl_exec($ch));
-
-        if(strlen($result->{'id'}) != 0)
+        if ($headers['http_code'] == 201)
         {
             echo "Order has been created successfully <br><br>";
             echo "<a href='index.html'>Get back to order creation page</a>";
         }
-        else
+        else if ($headers['http_code'] >= 400 && $headers['http_code'] < 500)
         {
-            foreach ($result->{'violations'} as $error)
-            {
-                echo "<b>" . $error->{'propertyPath'} . " " . $error->{'message'} . "</b><br><br>";
-            }
+            echo "Problems with request body parameters<br><br>";
             echo "<a href='index.html'>Get back to order creation page</a>";
         }
 

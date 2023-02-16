@@ -17,14 +17,14 @@
             "email" => $_POST['sender_email'],
             "fullName" => $_POST['sender_fullName'],
             "passport" => $_POST['sender_passport'],
-            "senderPointCode" => $_POST['sender_point_code']
+            "senderPointCode" => $tempPointCodeForCreation //$_POST['sender_point_code']
         ],
         "recipientData" =>
         [
             "phone" => $_POST['recipient_phone'],
             "email" => $_POST['recipient_email'],
             "fullName" => $_POST['recipient_fullName'],
-            "pickupPointCode" => $_POST['recipient_pickup_point_code']
+            "pickupPointCode" => $tempPointCodeForCreation //$_POST['recipient_pickup_point_code']
         ],
         "products" => [],
         "boxesData" => []
