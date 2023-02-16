@@ -29,22 +29,11 @@ class OrderCreation
         return $token;
     }
 
-    private function tokenExpired()
+    public function tokenExpired()
     {
-        $ch = curl_init();
+       $http_code = $this->sendRequest("https://api-test.bbunion.ru/v1/lkui/orders", "GET", null, null, null, true);
 
-        curl_setopt_array($ch, [
-           CURLOPT_URL => 'https://api-test.bbunion.ru/v1/lkui/orders',
-           CURLOPT_RETURNTRANSFER => true,
-           CURLOPT_SSL_VERIFYPEER => false,
-           CURLOPT_HTTPHEADER => ["Authorization: Bearer " . $_SESSION['access_token']]
-        ]);
-
-        curl_exec($ch);
-        $headers = curl_getinfo($ch);
-        curl_close($ch);
-
-        if ($headers['http_code'] == 200)
+        if ($http_code == 200)
         {
             return false;
         }
@@ -54,46 +43,91 @@ class OrderCreation
         }
     }
 
-    public function createOrder($fields)
+    private function sendRequest($url, $method, $headers = null, $params = null, $body = null, $tokenCheck = false)
     {
-        session_start();
-        if (!isset($_SESSION['access_token']))
+        if (!session_id())
         {
-            $_SESSION['access_token'] = $this->getToken();
+            session_start();
         }
-        else
+
+        if (!$tokenCheck)
         {
-            if ($this->tokenExpired())
+            if (!isset($_SESSION['access_token']))
             {
                 $_SESSION['access_token'] = $this->getToken();
             }
+            else
+            {
+                if ($this->tokenExpired())
+                {
+                    $_SESSION['access_token'] = $this->getToken();
+                }
+            }
         }
+
 
         $ch = curl_init();
 
-        curl_setopt_array($ch, [
-            CURLOPT_URL => 'https://api-test.bbunion.ru/v1/lkui/orders',
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $fields,
-            CURLOPT_HTTPHEADER => ["Content-Type: application/json", "Authorization: Bearer " . $_SESSION['access_token']],
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_SSL_VERIFYPEER => false
-        ]);
+        $headers []= "Authorization: Bearer " . $_SESSION['access_token'];
+
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+        switch($method)
+        {
+            case "POST":
+            {
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+
+                break;
+            }
+            case "GET":
+            {
+                if ($params)
+                {
+                    $url_params = http_build_query($params);
+                    curl_setopt($ch, CURLOPT_URL, $url . "?" . $url_params);
+                }
+
+                break;
+            }
+            case "PUT":
+            {
+                foreach ($params as $value)
+                {
+                    $url .= "/" . $value;
+                }
+                curl_setopt($ch, CURLOPT_URL, $url);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+                break;
+            }
+            default:
+                return "This method is not supported";
+        }
 
         curl_exec($ch);
         $headers = curl_getinfo($ch);
         curl_close($ch);
+        return $headers['http_code'];
+    }
 
-        if ($headers['http_code'] == 201)
+    public function createOrder($fields)
+    {
+        $http_code = $this->sendRequest("https://api-test.bbunion.ru/v1/lkui/orders", "POST", ["Content-Type: application/json"], null, $fields);
+
+        if ($http_code == 201)
         {
             echo "Order has been created successfully <br><br>";
             echo "<a href='index.html'>Get back to order creation page</a>";
         }
-        else if ($headers['http_code'] >= 400 && $headers['http_code'] < 500)
+        else if ($http_code >= 400 && $http_code < 500)
         {
             echo "Problems with request body parameters<br><br>";
             echo "<a href='index.html'>Get back to order creation page</a>";
         }
-
     }
 }
