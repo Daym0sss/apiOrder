@@ -11,64 +11,14 @@ class OrderCreation
 
     private function getToken()
     {
+        $result = $this->sendRequest('https://account-test.bbunion.ru/auth/realms/bbunion/protocol/openid-connect/token', 'POST', ['Content-Type: application/x-www-form-urlencoded'], null, "grant_type=client_credentials&client_id=$this->client_id&client_secret=$this->client_secret");
 
-        $ch = curl_init();
-        curl_setopt_array($ch, [
-           CURLOPT_URL => 'https://account-test.bbunion.ru/auth/realms/bbunion/protocol/openid-connect/token',
-           CURLOPT_POST => true,
-           CURLOPT_POSTFIELDS => "grant_type=client_credentials&client_id=$this->client_id&client_secret=$this->client_secret",
-           CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
-           CURLOPT_RETURNTRANSFER => true,
-           CURLOPT_SSL_VERIFYPEER => false
-        ]);
-
-        $token = json_decode(curl_exec($ch))->{'access_token'};
-
-        curl_close($ch);
-
-        return $token;
+        return $result['data']->{'access_token'};
     }
 
-    public function tokenExpired()
+    private function sendRequest($url, $method, $headers = null, $params = null, $body = null)
     {
-       $http_code = $this->sendRequest("https://api-test.bbunion.ru/v1/lkui/orders", "GET", null, null, null, true);
-
-        if ($http_code == 200)
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
-    }
-
-    private function sendRequest($url, $method, $headers = null, $params = null, $body = null, $tokenCheck = false)
-    {
-        if (!session_id())
-        {
-            session_start();
-        }
-
-        if (!$tokenCheck)
-        {
-            if (!isset($_SESSION['access_token']))
-            {
-                $_SESSION['access_token'] = $this->getToken();
-            }
-            else
-            {
-                if ($this->tokenExpired())
-                {
-                    $_SESSION['access_token'] = $this->getToken();
-                }
-            }
-        }
-
-
         $ch = curl_init();
-
-        $headers []= "Authorization: Bearer " . $_SESSION['access_token'];
 
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -109,22 +59,42 @@ class OrderCreation
                 return "This method is not supported";
         }
 
-        curl_exec($ch);
+        $data = curl_exec($ch);
         $headers = curl_getinfo($ch);
         curl_close($ch);
-        return $headers['http_code'];
+
+        $result = [];
+        $result['data'] = json_decode($data);
+        $result['headers'] = $headers;
+
+        return $result;
     }
 
     public function createOrder($fields)
     {
-        $http_code = $this->sendRequest("https://api-test.bbunion.ru/v1/lkui/orders", "POST", ["Content-Type: application/json"], null, $fields);
+        if (!session_id())
+        {
+            session_start();
+        }
 
-        if ($http_code == 201)
+        if (!isset($_SESSION['access_token']))
+        {
+            $_SESSION['access_token'] = $this->getToken();
+        }
+
+        $result = $this->sendRequest("https://api-test.bbunion.ru/v1/lkui/orders", "POST", ["Content-Type: application/json", "Authorization: Bearer " . $_SESSION['access_token']], null, $fields);
+
+        if ($result['headers']['http_code'] == 201)
         {
             echo "Order has been created successfully <br><br>";
             echo "<a href='index.html'>Get back to order creation page</a>";
         }
-        else if ($http_code >= 400 && $http_code < 500)
+        else if ($result['headers']['http_code'] == 401)
+        {
+            $_SESSION['access_token'] = $this->getToken();
+            $this->createOrder($fields);
+        }
+        else
         {
             echo "Problems with request body parameters<br><br>";
             echo "<a href='index.html'>Get back to order creation page</a>";
